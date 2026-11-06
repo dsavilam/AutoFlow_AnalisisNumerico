@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoFlow • MovePredict | Simulación y Despacho de Flota Autónoma</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="chart.min.js"></script>
+  <script src="data.js"></script>
+</head>
+<body>
+
+  <!-- Animated Background Layers -->
+  <div class="bg-canvas-backdrop"></div>
+  <div class="bg-cyber-grid"></div>
+
+  <div class="app-container">
+
+    <!-- STICKY TOP NAVBAR -->
+    <nav class="navbar animate-in">
+      <div class="brand-group">
+        <div class="brand-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#040814" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.9 2 11.2 2 11.5V16c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title-row">
+            <span class="brand-title">AutoFlow</span>
+            <span class="badge-pill">MovePredict Engine</span>
+            <span class="badge-pill badge-role">Algoritmos y Simulación</span>
+          </div>
+          <p class="brand-subtitle">Optimización Dinámica y Despacho Predictivo • AutoMove City Bogotá (200 Taxis Autónomos)</p>
+        </div>
+      </div>
+
+      <div class="nav-telemetry">
+        <div class="telemetry-pill">
+          <span class="ping-dot-wrapper"><span class="ping-dot" id="nav-status-dot"></span></span>
+          <span id="nav-status-text" style="font-weight: 600; color: #e2e8f0;">Telemetría Activa</span>
+        </div>
+        <div class="telemetry-pill live-clock-pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="live-clock-value" id="header-clock">09:29</span>
+          <span style="font-size: 0.74rem; color: #94a3b8;" id="header-minute-tag">Min 569</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- QUICK SECTION NAVIGATION -->
+    <div class="section-nav animate-in delay-1">
+      <a href="#sec-simulador" class="nav-chip">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        1. Simulador en Vivo &amp; Radar Bogotá
+      </a>
+      <a href="#sec-laboratorio" class="nav-chip">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        2. Curvas 1440 Min &amp; Laboratorio de Filtro
+      </a>
+      <a href="#sec-matematica" class="nav-chip">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+        3. Validación Hold-Out &amp; Polinomios Cúbicos
+      </a>
+      <a href="#sec-arquitectura" class="nav-chip">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        4. Arquitectura de Despacho &amp; KPIs
+      </a>
+    </div>
+
+    <!-- TOP 4 KPI CARDS -->
+    <section class="kpi-grid animate-in delay-1">
+      <!-- KPI 1 -->
+      <div class="card kpi-card">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">Demanda Pico Estimada</div>
+            <div class="kpi-value-row" style="margin-top: 6px;">
+              <span class="kpi-value" id="kpi-peak-val">180.20</span>
+              <span class="kpi-unit">sol/min</span>
+            </div>
+          </div>
+          <div class="kpi-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <span>Instante máximo: <strong>12:12 h (Min 732)</strong></span>
+          <span>Valle: <strong>11.86 (02:39)</strong></span>
+        </div>
+      </div>
+
+      <!-- KPI 2 -->
+      <div class="card kpi-card accent-rose">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">Ventana Crítica (&gt; <span id="kpi-thresh-label">150</span> sol/min)</div>
+            <div class="kpi-value-row" style="margin-top: 6px;">
+              <span class="kpi-value" style="color: #fb7185;" id="kpi-crit-mins">291</span>
+              <span class="kpi-unit" style="color: #fda4af;" id="kpi-crit-hours">minutos (4.85 h)</span>
+            </div>
+          </div>
+          <div class="kpi-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <span>Franja: <strong style="color: #fda4af;" id="kpi-crit-range">10:09 – 14:59</strong></span>
+          <span>Raíces: <strong>10.14h, 15.0h</strong></span>
+        </div>
+      </div>
+
+      <!-- KPI 3 -->
+      <div class="card kpi-card accent-emerald">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">Demanda Diaria (Integral 24h)</div>
+            <div class="kpi-value-row" style="margin-top: 6px;">
+              <span class="kpi-value" style="color: #34d399;">121,824</span>
+              <span class="kpi-unit" style="color: #6ee7b7;">solicitudes/día</span>
+            </div>
+          </div>
+          <div class="kpi-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <span>Fórmula: <strong>60 &times; &int;₀²⁴ S(t) dt</strong></span>
+          <span>Cierre: <strong>S(0)=S(24)=15</strong></span>
+        </div>
+      </div>
+
+      <!-- KPI 4 -->
+      <div class="card kpi-card accent-amber">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">Precisión Filtro Causal (+30m)</div>
+            <div class="kpi-value-row" style="margin-top: 6px;">
+              <span class="kpi-value" style="color: #fbbf24;" id="kpi-filter-prec">91.7%</span>
+              <span class="kpi-unit" style="color: #fcd34d;" id="kpi-filter-rec">Recall: 89.9%</span>
+            </div>
+          </div>
+          <div class="kpi-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <span>RMSE Filtro: <strong id="kpi-filter-rmse">6.8330</strong></span>
+          <span>Vs. Lineal: <strong style="color: #34d399;">-11.89% error</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMAND CENTER: LIVE SIMULATOR + BOGOTA FLEET RADAR -->
+    <section id="sec-simulador" class="command-grid animate-in delay-2">
+      
+      <!-- Left: Time Scrubber & Real-Time Telemetry Gauges -->
+      <div class="card panel-padding">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              Simulador Operativo Minuto a Minuto (1440 Minutos)
+            </h2>
+            <p class="section-desc">Explora el comportamiento de la demanda y la anticipación de 30 minutos para reasignar los 200 taxis autónomos.</p>
+          </div>
+
+          <div class="playback-bar">
+            <button id="btn-play" class="btn btn-glow">
+              <svg id="icon-play" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="text-play">Simular Día</span>
+            </button>
+            <div class="speed-group">
+              <button class="speed-chip active" data-speed="1">1x</button>
+              <button class="speed-chip" data-speed="5">5x</button>
+              <button class="speed-chip" data-speed="15">15x</button>
+            </div>
+            <button id="btn-reset" class="btn btn-dark" title="Volver a las 00:00">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrubber Box -->
+        <div class="scrubber-box">
+          <div class="scrubber-header">
+            <span class="day-phase-badge" id="day-phase-badge">☀️ Transición Mañana • Tramo 5 [9.0h - 12.0h]</span>
+            <span class="scrubber-time-big" id="scrubber-time-display">09:29 h (t = 9.483 h | Min 569)</span>
+          </div>
+          <input type="range" id="time-slider" class="timeline-range" min="0" max="1439" value="569" step="1">
+          <div class="scrubber-ticks">
+            <span>00:00</span>
+            <span>03:00</span>
+            <span>06:00</span>
+            <span class="tick-critical">10:09 (&gt;150)</span>
+            <span>12:00</span>
+            <span class="tick-critical">14:59 (&gt;150)</span>
+            <span>18:00</span>
+            <span>21:00</span>
+            <span>23:59</span>
+          </div>
+        </div>
+
+        <!-- Quick Jump Buttons -->
+        <div class="jumps-row">
+          <span class="jumps-label">Saltos Rápidos:</span>
+          <button class="jump-pill" data-min="0">00:00 (Cierre C²)</button>
+          <button class="jump-pill" data-min="159">02:39 (Valle 11.9)</button>
+          <button class="jump-pill pill-alert active" data-min="569">09:29 (🚨 1ª Alerta +30m)</button>
+          <button class="jump-pill pill-alert" data-min="609">10:09 (Cruce 150)</button>
+          <button class="jump-pill pill-alert" data-min="732">12:12 (Pico 180.2)</button>
+          <button class="jump-pill" data-min="899">14:59 (Fin Crítico)</button>
+          <button class="jump-pill" data-min="1080">18:00 (Validación)</button>
+        </div>
+
+        <!-- 4 Live Telemetry Gauges -->
+        <div class="telemetry-cards-grid">
+          <!-- Gauge 1: Demanda Base Spline -->
+          <div class="tele-box">
+            <div class="tele-info">
+              <span class="tele-title">Curva Base Spline S(t)</span>
+              <span class="tele-big-num" style="color: #00f2fe;" id="tele-spline">133.13</span>
+              <span class="tele-sub" id="tele-tramo-sub">Solicitudes/min • Polinomio #5</span>
+            </div>
+            <div class="radial-gauge">
+              <svg viewBox="0 0 72 72">
+                <circle class="gauge-bg" cx="36" cy="36" r="29"></circle>
+                <circle class="gauge-progress" id="gauge-spline-bar" cx="36" cy="36" r="29" stroke-dasharray="182.2" stroke-dashoffset="50"></circle>
+              </svg>
+              <span class="gauge-center-text" id="gauge-spline-pct">74%</span>
+            </div>
+          </div>
+
+          <!-- Gauge 2: Observada en Tiempo Real -->
+          <div class="tele-box">
+            <div class="tele-info">
+              <span class="tele-title">Demanda Observada z(k)</span>
+              <span class="tele-big-num" id="tele-obs">152.22</span>
+              <span class="tele-sub" id="tele-res-sub">Residuo e(k): +19.09 sol/min</span>
+            </div>
+            <div class="radial-gauge">
+              <svg viewBox="0 0 72 72">
+                <circle class="gauge-bg" cx="36" cy="36" r="29"></circle>
+                <circle class="gauge-progress" id="gauge-obs-bar" cx="36" cy="36" r="29" stroke="#a855f7" stroke-dasharray="182.2" stroke-dashoffset="40"></circle>
+              </svg>
+              <span class="gauge-center-text" id="gauge-obs-pct">84%</span>
+            </div>
+          </div>
+
+          <!-- Gauge 3: Pronóstico a +30m -->
+          <div class="tele-box">
+            <div class="tele-info">
+              <span class="tele-title" id="tele-pred-title">Pronóstico Causal (t + 30m)</span>
+              <span class="tele-big-num" style="color: #38bdf8;" id="tele-pred">150.10</span>
+              <span class="tele-sub" id="tele-pred-sub">Objetivo: 09:59 h (EMA + MMP)</span>
+            </div>
+            <div class="radial-gauge">
+              <svg viewBox="0 0 72 72">
+                <circle class="gauge-bg" cx="36" cy="36" r="29"></circle>
+                <circle class="gauge-progress" id="gauge-pred-bar" cx="36" cy="36" r="29" stroke="#f43f5e" stroke-dasharray="182.2" stroke-dashoffset="35"></circle>
+              </svg>
+              <span class="gauge-center-text" id="gauge-pred-pct">83%</span>
+            </div>
+          </div>
+
+          <!-- Gauge 4: Flota Requerida -->
+          <div class="tele-box">
+            <div class="tele-info">
+              <span class="tele-title">Despacho Flota Autónoma</span>
+              <span class="tele-big-num" style="color: #10b981;" id="tele-fleet">167 / 200</span>
+              <span class="tele-sub" id="tele-fleet-sub">33 unidades en reserva dinámica</span>
+            </div>
+            <div class="radial-gauge">
+              <svg viewBox="0 0 72 72">
+                <circle class="gauge-bg" cx="36" cy="36" r="29"></circle>
+                <circle class="gauge-progress" id="gauge-fleet-bar" cx="36" cy="36" r="29" stroke="#10b981" stroke-dasharray="182.2" stroke-dashoffset="30"></circle>
+              </svg>
+              <span class="gauge-center-text" id="gauge-fleet-pct">84%</span>
+            </div>
+          </div>
+
+          <!-- Full-width Dynamic Alert Status Banner -->
+          <div class="dispatch-status-banner state-critical" id="dispatch-banner">
+            <div class="banner-left">
+              <span class="ping-dot-wrapper"><span class="ping-dot red" id="banner-dot"></span></span>
+              <div>
+                <div class="banner-title" id="banner-title">🚨 ALERTA PREVENTIVA DE DESPACHO: Sobrecarga Proyectada a las 09:59</div>
+                <div class="banner-subtitle" id="banner-subtitle">El pronóstico a +30 min (150.10 sol/min) supera el umbral crítico de 150. Reasignando taxis preventivamente hacia zonas de alta demanda.</div>
+              </div>
+            </div>
+            <span class="badge-pill" id="banner-pill" style="background: rgba(244,63,94,0.25); color: #fda4af; border-color: #f43f5e;">ACCIÓN AUTOMÁTICA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Animated Bogotá Autonomous Fleet Radar & Breakdown -->
+      <div class="card panel-padding radar-panel">
+        <div>
+          <div class="section-header" style="margin-bottom: 14px; padding-bottom: 12px;">
+            <div>
+              <h2 class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                Radar de Flota en Vivo • Bogotá D.C.
+              </h2>
+              <p class="section-desc">Simulación espacial de las 200 unidades autónomas según la señal de MovePredict.</p>
+            </div>
+          </div>
+
+          <div class="radar-canvas-wrapper">
+            <canvas id="bogota-radar-canvas" width="520" height="245"></canvas>
+            <div class="radar-overlay-tag" id="radar-mode-tag">MODO: REASIGNACIÓN PREVENTIVA (+30 MIN)</div>
+            <div class="radar-overlay-bottom">Nodos: Usaquén • Chapinero • Centro • El Dorado • Salitre</div>
+          </div>
+        </div>
+
+        <!-- 200 Taxis Breakdown Bars -->
+        <div class="fleet-bars-box">
+          <div class="fleet-bar-item">
+            <div class="fleet-bar-label-row">
+              <span style="color: #00f2fe;">🚖 En Servicio Activo con Pasajero</span>
+              <span class="mono" id="bar-active-txt">138 taxis (69%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="bar-active-fill" style="width: 69%; background: linear-gradient(90deg, #00f2fe, #3b82f6);"></div>
+            </div>
+          </div>
+
+          <div class="fleet-bar-item">
+            <div class="fleet-bar-label-row">
+              <span style="color: #fb7185;">🚀 En Reasignación Preventiva (MovePredict)</span>
+              <span class="mono" id="bar-dispatch-txt">29 taxis (15%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="bar-dispatch-fill" style="width: 15%; background: linear-gradient(90deg, #f43f5e, #fbbf24);"></div>
+            </div>
+          </div>
+
+          <div class="fleet-bar-item">
+            <div class="fleet-bar-label-row">
+              <span style="color: #34d399;">🔋 En Reserva / Carga Inteligente</span>
+              <span class="mono" id="bar-reserve-txt">33 taxis (16%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="bar-reserve-fill" style="width: 16%; background: linear-gradient(90deg, #10b981, #059669);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- STUDIO SECTION: INTERACTIVE CHARTS + LIVE ALGORITHM PARAMETER LAB -->
+    <section id="sec-laboratorio" class="studio-grid animate-in delay-3">
+
+      <!-- Left: Multi-View Interactive Chart Studio -->
+      <div class="card panel-padding">
+        <div class="tabs-header">
+          <div class="tab-buttons-group">
+            <button class="studio-tab active" data-tab="curvas">1. Curva 24h (Periódica vs. Natural)</button>
+            <button class="studio-tab" data-tab="filtro">2. Filtro Predictivo &amp; Alertas (30m)</button>
+            <button class="studio-tab" data-tab="validacion">3. Validación Hold-Out (t=9h, 18h)</button>
+          </div>
+
+          <!-- Series Toggles for Tab 1 -->
+          <div class="series-toggles" id="chart-series-toggles">
+            <label class="toggle-chip" style="color: #00f2fe;">
+              <input type="checkbox" id="chk-per" checked> Spline Periódica
+            </label>
+            <label class="toggle-chip" style="color: #f59e0b;">
+              <input type="checkbox" id="chk-nat" checked> Spline Natural
+            </label>
+            <label class="toggle-chip" style="color: #94a3b8;">
+              <input type="checkbox" id="chk-lin"> Lineal
+            </label>
+            <label class="toggle-chip" style="color: #f43f5e;">
+              <input type="checkbox" id="chk-lag"> Lagrange
+            </label>
+            <label class="toggle-chip" style="color: #ffffff;">
+              <input type="checkbox" id="chk-nodes" checked> Nodos (10 + Cierre)
+            </label>
+          </div>
+        </div>
+
+        <div class="chart-stage">
+          <canvas id="main-studio-chart"></canvas>
+        </div>
+
+        <div class="chart-caption-bar">
+          <span id="chart-Dynamic-caption">💡 Haz clic en cualquier punto de la gráfica para trasladar el simulador a ese minuto exacto del día.</span>
+          <span class="mono" style="color: #38bdf8;">Malla: 1440 minutos (t = 0.000 h a 23.983 h)</span>
+        </div>
+      </div>
+
+      <!-- Right: Live Filter & Threshold Calibration Lab -->
+      <div class="card panel-padding">
+        <div class="section-header" style="margin-bottom: 14px; padding-bottom: 12px;">
+          <div>
+            <h2 class="section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2.2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+              Laboratorio de Calibración en Vivo
+            </h2>
+            <p class="section-desc">Ajusta hiperparámetros en tiempo real y observa el impacto en RMSE y alertas.</p>
+          </div>
+          <button id="btn-restore-params" class="btn btn-dark" style="padding: 6px 10px; font-size: 0.72rem;">Restaurar Caso Base</button>
+        </div>
+
+        <div class="param-control-group">
+          <!-- Param 1: Threshold -->
+          <div class="param-item">
+            <div class="param-top">
+              <span>Umbral Crítico de Demanda</span>
+              <span class="param-val-badge" id="val-param-thresh" style="color: #fb7185; background: rgba(244,63,94,0.15);">150 sol/min</span>
+            </div>
+            <input type="range" id="slider-param-thresh" class="param-range" min="120" max="175" step="1" value="150">
+            <div class="param-hint">Recalcula al instante la duración de la ventana crítica en Bogotá.</div>
+          </div>
+
+          <!-- Param 2: EMA Alpha -->
+          <div class="param-item">
+            <div class="param-top">
+              <span>Factor Suavizado Exponencial (&alpha;)</span>
+              <span class="param-val-badge" id="val-param-alpha">0.25</span>
+            </div>
+            <input type="range" id="slider-param-alpha" class="param-range" min="0.05" max="0.80" step="0.05" value="0.25">
+            <div class="param-hint">L_k = &alpha;&middot;e_k + (1 - &alpha;)&middot;L_{k-1} sobre el residuo observado.</div>
+          </div>
+
+          <!-- Param 3: WMA Window -->
+          <div class="param-item">
+            <div class="param-top">
+              <span>Ventana Media Móvil Ponderada (W)</span>
+              <span class="param-val-badge" id="val-param-win">15 min</span>
+            </div>
+            <input type="range" id="slider-param-win" class="param-range" min="3" max="30" step="1" value="15">
+            <div class="param-hint">Pesos lineales [1, 2, ..., W] dando mayor prioridad al minuto reciente.</div>
+          </div>
+
+          <!-- Param 4: Persistence Damping Toggle -->
+          <div class="param-item" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div>
+              <div style="font-size: 0.8rem; font-weight: 600; color: #fff;">Amortiguamiento de Persistencia (0.95³⁰)</div>
+              <div class="param-hint">Si se desactiva, el residuo no revierte a la media y el RMSE sube a 8.3168.</div>
+            </div>
+            <input type="checkbox" id="chk-damping" checked style="width: 20px; height: 20px; accent-color: #00f2fe; cursor: pointer;">
+          </div>
+
+          <!-- Live Confusion Matrix Output -->
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 600; color: #cbd5e1; margin-bottom: 4px;">
+              <span>Matriz de Confusión en Vivo (1410 Pares):</span>
+              <span class="mono" style="color: #00f2fe;" id="cm-live-rmse">RMSE: 6.8330</span>
+            </div>
+            <div class="cm-grid">
+              <div class="cm-cell">
+                <span class="cm-label">Verdaderos Positivos (TP)</span>
+                <span class="cm-num" style="color: #34d399;" id="cm-tp">276</span>
+              </div>
+              <div class="cm-cell">
+                <span class="cm-label">Falsos Positivos (FP)</span>
+                <span class="cm-num" style="color: #fbbf24;" id="cm-fp">25</span>
+              </div>
+              <div class="cm-cell">
+                <span class="cm-label">Falsos Negativos (FN)</span>
+                <span class="cm-num" style="color: #fb7185;" id="cm-fn">31</span>
+              </div>
+              <div class="cm-cell">
+                <span class="cm-label">Verdaderos Negativos (TN)</span>
+                <span class="cm-num" style="color: #38bdf8;" id="cm-tn">1078</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- MATHEMATICAL RIGOR SECTION: VALIDATION TABLE + LIVE POLYNOMIAL INSPECTOR -->
+    <section id="sec-matematica" class="bottom-grid animate-in delay-4">
+
+      <!-- Left: Cross-Validation & Periodic Boundary Proof -->
+      <div class="card panel-padding" style="display: flex; flex-direction: column; gap: 18px;">
+        <div class="section-header" style="margin-bottom: 0; padding-bottom: 12px;">
+          <div>
+            <h2 class="section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Validación Cruzada Hold-Out &amp; Continuidad C²
+            </h2>
+            <p class="section-desc">Evaluación dejando fuera simultáneamente (9.0h, 120) y (18.0h, 98).</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Método de Interpolación</th>
+                <th>Pred. t=9h (Real: 120)</th>
+                <th>Pred. t=18h (Real: 98)</th>
+                <th>RMSE</th>
+                <th>Error Máx.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="active-row">
+                <td style="font-weight: 700; color: #00f2fe;">Spline Cúbica Periódica</td>
+                <td class="mono">126.8275</td>
+                <td class="mono">97.5958</td>
+                <td class="mono" style="font-weight: 700; color: #00f2fe;">4.8362</td>
+                <td class="mono">6.8275</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #fbbf24;">Spline Cúbica Natural</td>
+                <td class="mono">126.7058</td>
+                <td class="mono">98.2211</td>
+                <td class="mono">4.7443</td>
+                <td class="mono">6.7058</td>
+              </tr>
+              <tr>
+                <td style="color: #94a3b8;">Lineal a Trozos</td>
+                <td class="mono">112.5000</td>
+                <td class="mono">100.0000</td>
+                <td class="mono">5.4886</td>
+                <td class="mono">7.5000</td>
+              </tr>
+              <tr>
+                <td style="color: #fb7185;">Polinomio Global Lagrange</td>
+                <td class="mono">131.9566</td>
+                <td class="mono">95.6351</td>
+                <td class="mono" style="color: #fb7185;">8.6184</td>
+                <td class="mono">11.9566</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Boundary Condition Proof Card -->
+        <div class="param-item" style="border-color: rgba(0, 242, 254, 0.3);">
+          <div style="font-size: 0.82rem; font-weight: 700; color: #00f2fe; margin-bottom: 8px;">
+            🔍 ¿Por qué elegir Condición Periódica sobre Natural? (Empalme 00:00 h &harr; 24:00 h)
+          </div>
+          <div class="table-wrap">
+            <table class="styled-table" style="font-size: 0.76rem;">
+              <thead>
+                <tr>
+                  <th>Derivada en Frontera</th>
+                  <th>Spline Periódica (Ciclo Cerrado)</th>
+                  <th>Spline Natural (Extremo Libre)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Valor S(0) vs S(24)</td>
+                  <td class="mono" style="color: #34d399;">15.0000 = 15.0000 (Continua)</td>
+                  <td class="mono">15.0000 = 15.0000</td>
+                </tr>
+                <tr>
+                  <td>Pendiente S'(0) vs S'(24)</td>
+                  <td class="mono" style="color: #34d399;">-1.9495 = -1.9495 (Suave C¹)</td>
+                  <td class="mono" style="color: #fb7185;">+5.3941 &ne; -13.8617 (Quiebre)</td>
+                </tr>
+                <tr>
+                  <td>Curvatura S''(0) vs S''(24)</td>
+                  <td class="mono" style="color: #34d399;">13.9683 = 13.9683 (Suave C²)</td>
+                  <td class="mono" style="color: #fbbf24;">0.0000 = 0.0000 (Forzada a 0)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Piecewise Polynomial Evaluator & 10 Tramos Table -->
+      <div class="card panel-padding">
+        <div class="section-header" style="margin-bottom: 14px; padding-bottom: 12px;">
+          <div>
+            <h2 class="section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2.2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              Inspector Dinámico de los 10 Polinomios Cúbicos S_i(t)
+            </h2>
+            <p class="section-desc">Al mover el simulador, se ilumina el tramo activo y se evalúa la ecuación cúbica en vivo.</p>
+          </div>
+        </div>
+
+        <!-- Live Polynomial Evaluation Box -->
+        <div class="formula-display-box">
+          <div class="formula-title">
+            <span id="poly-live-tramo">TRAMO ACTIVO #5 • INTERVALO [9.0 h, 12.0 h]</span>
+            <span class="mono" id="poly-live-t">t = 9.4833 h</span>
+          </div>
+          <div class="formula-equation" id="poly-live-symbolic">
+            S₅(t) = 120.0000 + 27.3302(t - 9.0) + 0.0877(t - 9.0)² - 0.8437(t - 9.0)³
+          </div>
+          <div class="formula-eval" id="poly-live-result">
+            &rArr; Evaluación en 09:29: &Delta;t = 0.4833 h &nbsp;|&nbsp; S₅(9.4833) = 133.13 solicitudes/min
+          </div>
+        </div>
+
+        <!-- 10 Tramos Table -->
+        <div class="table-wrap" style="max-height: 290px; overflow-y: auto;">
+          <table class="styled-table" id="poly-table">
+            <thead>
+              <tr>
+                <th>Tramo</th>
+                <th>Intervalo [t_i, t_{i+1}]</th>
+                <th>a_i (Nivel)</th>
+                <th>b_i (Lineal)</th>
+                <th>c_i (Cuadrático)</th>
+                <th>d_i (Cúbico)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-poly">
+              <!-- Populated by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ARCHITECTURE & STRATEGY PIPELINE -->
+    <section id="sec-arquitectura" class="card panel-padding animate-in delay-4">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            Arquitectura de Integración MovePredict &amp; Metas Operativas (AutoMove City)
+          </h2>
+          <p class="section-desc">Flujo extremo a extremo desde los 10 reportes discretos hasta la reasignación dinámica preventiva de la flota.</p>
+        </div>
+      </div>
+
+      <div class="pipeline-steps">
+        <div class="step-card">
+          <span class="step-num">ETAPA 01</span>
+          <div class="step-title">Captura &amp; Cierre C²</div>
+          <p class="step-text">Recepción de los 10 nodos no equidistantes y adición del nodo de cierre (24.0h, 15) para asegurar periodicidad diaria.</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-num">ETAPA 02</span>
+          <div class="step-title">Motor CubicSpline</div>
+          <p class="step-text">Resolución de los 40 coeficientes cúbicos generando la curva base minuto a minuto (1440 instantes) e integral diaria.</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-num">ETAPA 03</span>
+          <div class="step-title">Filtro Causal EMA+MMP</div>
+          <p class="step-text">Captura del residuo en tiempo real e_k = z_k - S(t_k) combinando Suavizado Exponencial (&alpha;=0.25) y Media Móvil (W=15).</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-num">ETAPA 04</span>
+          <div class="step-title">Alerta Anticipada +30m</div>
+          <p class="step-text">Proyección amortiguada (0.95³⁰) a 30 minutos. Dispara alerta preventiva a las 09:29 antes de cruzar las 150 sol/min.</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-num">ETAPA 05</span>
+          <div class="step-title">Despacho &amp; KPIs (-20%)</div>
+          <p class="step-text">Reasignación proactiva de los 200 taxis autónomos en Bogotá para reducir tiempos de espera un 20% y optimizar energía.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div><strong>AutoFlow • MovePredict v1.0</strong> — Plataforma Interactiva de Simulación y Despacho Predictivo</div>
+      <div>Estudio de Caso 1: Optimización de Rutas en Flota de 200 Taxis Autónomos en Bogotá • Rol: Ingeniero de Algoritmos y Simulación</div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
