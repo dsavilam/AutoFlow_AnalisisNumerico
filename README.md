@@ -41,7 +41,7 @@ Para evitar extrapolación polinómica entre las $21.0\text{ h}$ y las $24.0\tex
 | **8** | `18.0` | `18:00` | **98** | Retorno tarde *(Retirado en Hold-Out)* |
 | **9** | `19.5` | `19:30` | **75** | Transición nocturna |
 | **10** | `21.0` | `21:00` | **55** | Descenso nocturno |
-| **11 (Cierre)** | `24.0` | `24:00` | **15** | **Nodo de cierre periódico ($S(24)=S(0)$)** |
+| **11 (Cierre)** | `24.0` | `24:00` | **15** | **Nodo de cierre periódico (S(24) = S(0))** |
 
 ---
 
@@ -184,6 +184,6 @@ AutoFlow_AnalisisNumerico/
 ├── data.json           # Resultados analíticos, coeficientes y métricas en formato JSON
 ├── chart.min.js        # Librería Chart.js v4 local para funcionamiento 100% offline
 ├── serve.py            # Servidor HTTP local con apertura automática en navegador
-├── MovePredict.ipynb   # Cuaderno Jupyter original con el desarrollo matemático y validación
+├── AutoFlow.ipynb      # Cuaderno Jupyter original con el desarrollo matemático y validación
 └── README.md           # Documentación técnica y ejecutiva del proyecto
 ```
